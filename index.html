@@ -1,0 +1,147 @@
+<html>
+  <head>
+
+    <style>
+         a{
+          padding: 20px;
+        }
+
+        .products{
+            list-style: none;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script
+      src="https://unpkg.com/react@16/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.0.0/react-router-dom.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+
+    const {Route, HashRouter, Link} = ReactRouterDOM
+
+        function Nav(){
+            return(
+               <div className='Nav'>
+                    <h2>Products</h2>
+                        <Link to='/allProducts'>All Products</Link>
+                        <Link to='/inStock'>In Stock</Link>
+                        <Link to='/backordered'>Backordered</Link> 
+                        <Link to='/discontinued'>Discontinued</Link>       
+               </div>
+            )
+        }
+
+        class Products extends React.Component{
+
+            constructor(props){
+                super(props)
+                this.state = {
+                    products: [],
+                    categories: ['in stock', 'backordered', 'discontinued']
+                }
+
+                // this.handleSubmit = this.handleSubmit.bind(this);
+                this.handleChange = this.handleChange.bind(this);
+            }
+
+            componentDidUpdate(){
+                
+            }
+
+            async handleChange(e){
+                e.preventDefault();
+
+                this.props.products[e.target.id-1].status = e.target.value;
+                let changedStatus = this.props.products[e.target.id-1].status;
+                console.log(changedStatus)
+
+                try {
+                     const res = await axios.put(`/api/products/${e.target.id}`, {
+                        changedStatus
+                     });
+
+                //console.log(res.data);
+                } catch (err) {
+                     console.error(err);
+                 }
+            }
+
+            render(){   
+                console.log('props in all products', this.props.products);         
+                return(<div className='Products'>
+                                 <h4>{!this.props.products ? 'loading...' : this.props.products.map((item, idx) =>(
+                                        
+                                    <div>
+                                        <li key={item.id}>{item.name}</li>
+                                        <form>
+                                            <select id={item.id} defaultValue={item.status} onChange={this.handleChange}>
+
+                                                {this.state.categories.map(status => <option value = {status}>{status}</option>)}
+                                        
+                                            </select>
+                                        </form>
+                                    </div>
+
+                                    ))}</h4>
+
+                       </div>
+                    )
+            }
+            
+
+            
+        }
+
+        class Main extends React.Component{
+
+            constructor(){
+                super()
+                this.state = {
+                }
+            }
+
+            async componentDidMount(){
+                try{
+                    const api = axios.get('/api/products')
+                    .then(response => response.data)
+                    .then(data => this.setState({products: data}))
+                }
+                catch(err){
+                    console.log('there was an error fetching data from api')
+                }
+            }
+
+            render(){
+
+                console.log(this.state.data);
+                return(
+                    <HashRouter>
+                        < Nav />
+                        <Route exact path = '/allProducts' render={()=><Products products={this.state.products}/>}/>
+                        <Route exact path = '/inStock' />
+                        <Route exact path = '/backordered' />
+                        <Route exact path = '/discontinued' />
+                    </HashRouter>
+                )
+            }
+        }
+        
+
+
+
+      const root = document.querySelector("#root");
+      ReactDOM.render(<Main />, root);
+    </script>
+  </body>
+</html>
